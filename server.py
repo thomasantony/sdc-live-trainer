@@ -52,10 +52,12 @@ class ControlServer(Namespace):
                      'image': image}
 
         for cb in self.callbacks:
-            cb(telemetry, self)
+            cb.handle_telemetry(telemetry)
 
     def on_connect(self, sid, environ):
         print("connect ", sid)
+        for cb in self.callbacks:
+            cb.handle_connect(sid)
         self.send_control(0, 0)
 
     def send_control(self, steering_angle, throttle):
