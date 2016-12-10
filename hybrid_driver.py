@@ -1,11 +1,17 @@
 """
-Script for manual control of Udacity SDC sim using keyboard
+Script for control of Udacity SDC sim with a Keras model with keyboard tweaking
+and override
 """
 __author__ = 'Thomas Antony'
 
+import os
 import sys
 import tkinter
-import os
+import argparse
+import base64
+import json
+import cv2
+
 from server import ControlServer
 from platform import system as platform
 
@@ -15,8 +21,10 @@ import eventlet.wsgi
 from flask import Flask
 from functools import partial
 
-class ManualDriver(object):
-    def __init__(self):
+from keras.models import model_from_json
+
+class HybridDriver(object):
+    def __init__(self, model):
         # Control variables
         self.steering_angle = 0
         self.throttle = 0
@@ -39,11 +47,15 @@ class ManualDriver(object):
         self.control_srv = ControlServer()
         self.control_srv.register_callback(self) # Callback for telemetry
 
+        self.model = model
+
+        self.mode = 'auto' # can be 'auto' or 'manual'
+
     def init_gui(self):
         # Create the root window
         self.root = tkinter.Tk()
         self.root.geometry('350x75+490+550')
-        self.root.title('Manual driver')
+        self.root.title('Hybrid driver')
 
         # Create a label with status
         self.status = tkinter.StringVar()
@@ -84,8 +96,9 @@ class ManualDriver(object):
             eventlet.sleep(0.01)
 
     def update_status(self):
-        self.status.set('Speed = %0.2f mph, Steering angle = %0.2f deg' %
-                    (self.speed, self.steering_angle*25))
+        mode = 'Autonomous' if self.mode == 'auto' else 'Manual override'
+        self.status.set('Mode: %s\nSpeed = %0.2f mph, Steering angle = %0.2f deg' %
+                    (mode, self.speed, self.steering_angle*25))
 
     def keydown(self, event):
         if (event.char == 'q'):
@@ -93,6 +106,10 @@ class ManualDriver(object):
             os._exit(0) # Sledgehammer
         elif event.char == 'c' or event.char == 'C':
             self.reset_steering()
+        elif event.char == 'x' or event.char == 'X':
+            self.mode = 'manual'
+        elif event.char == 'a' or event.char == 'A':
+            self.mode = 'auto'
 
     def speed_control(self, direction):
         """
@@ -119,15 +136,15 @@ class ManualDriver(object):
 
     def update_steering(self, data):
         """
-        Implements a simple centering torque for the steering
+        Implements a simple centering torque for the manual steering
         """
-
-        if abs(self.steering_angle) < self.centering_torque:
-            self.steering_angle = 0.0
-        elif self.steering_angle > 0:
-            self.steering_angle -= self.centering_torque
-        elif self.steering_angle < 0:
-            self.steering_angle += self.centering_torque
+        if self.mode == 'manual':
+            if abs(self.steering_angle) < self.centering_torque:
+                self.steering_angle = 0.0
+            elif self.steering_angle > 0:
+                self.steering_angle -= self.centering_torque
+            elif self.steering_angle < 0:
+                self.steering_angle += self.centering_torque
 
     def turn(self, direction = None):
         """
@@ -143,14 +160,29 @@ class ManualDriver(object):
         self.steering_angle = 0.0
         self.update_status()
 
+    def roi(self, img): # For model 5
+        return cv2.resize(img[60:140,40:280], (200, 66))
+
+    def predict_steering(self, data):
+        image_array = self.roi(cv2.cvtColor(data['image'], cv2.COLOR_RGB2YUV))
+        transformed_image_array = image_array[None, :, :, :]
+
+        return float(model.predict(transformed_image_array, batch_size=1))
+
     # Callback functions triggered by ControlServer
     def handle_connect(self, sid):
         # Focus window when simulator connects
         self.focus_gui()
 
     def handle_telemetry(self, data):
-        # Send current control variables to simulator
-        self.control_srv.send_control(self.steering_angle, self.throttle)
+
+        if self.mode == 'auto':
+            steering_angle = self.predict_steering(data)
+        elif self.mode == 'manual':
+            steering_angle = self.steering_angle
+
+        # Send current control variables to simulator    
+        self.control_srv.send_control(steering_angle, self.throttle)
 
         # Update UI
         self.update_status()
@@ -161,6 +193,17 @@ class ManualDriver(object):
 
 
 if __name__ == '__main__':
-    driver = ManualDriver()
+    parser = argparse.ArgumentParser(description='Remote Driving')
+    parser.add_argument('model', type=str,
+        help='Path to model definition json. Model weights should be on the same path.')
+    args = parser.parse_args()
+    with open(args.model, 'r') as jfile:
+        model = model_from_json(jfile.read())
+
+    model.compile("adam", "mse")
+    weights_file = args.model.replace('json', 'h5')
+    model.load_weights(weights_file)
+
+    driver = HybridDriver(model)
     driver.init_gui()
     driver.start_server()

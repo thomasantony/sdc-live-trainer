@@ -49,7 +49,7 @@ class ControlServer(Namespace):
         telemetry = {'steering_angle': steering_angle,
                      'throttle': throttle,
                      'speed': speed,
-                     'image': image}
+                     'image': np.asarray(image, dtype=np.float32)}
 
         for cb in self.callbacks:
             cb.handle_telemetry(telemetry)
