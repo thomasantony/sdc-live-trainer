@@ -197,7 +197,7 @@ class LiveTrainer(object):
     def train_model(self, model, X_train, y_train):
         h = model.fit(X_train, y_train,
             nb_epoch = 1, verbose=0, batch_size=self.batch_size)
-        model.save_weights('./checkpoints/checkpoint.h5')
+        model.save_weights('./checkpoint.h5')
         print('loss : ',h.history['loss'][-1])
         return model
 
@@ -256,10 +256,12 @@ if __name__ == '__main__':
     with open(args.model, 'r') as jfile:
         model = model_from_json(jfile.read())
 
-    adam = Adam(lr=0.000001)
+    adam = Adam(lr=0.00001)
     model.compile(adam, "mse")
     weights_file = args.model.replace('json', 'h5')
-    model.load_weights(weights_file)
+
+    if os.path.exists(weights_file):
+        model.load_weights(weights_file)
 
     driver = LiveTrainer(model)
     driver.init_gui()
