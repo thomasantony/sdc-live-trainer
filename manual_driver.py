@@ -100,7 +100,7 @@ class ManualDriver(object):
         """
         if self.speed < 25:
             self.speed += direction*1
-        self.speed = max(0, self.speed)
+        # self.speed = max(0, self.speed)
 
         self.update_status()
 

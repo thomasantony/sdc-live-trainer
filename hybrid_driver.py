@@ -107,9 +107,10 @@ class HybridDriver(object):
         elif event.char == 'c' or event.char == 'C':
             self.reset_steering()
         elif event.char == 'x' or event.char == 'X':
-            self.mode = 'manual'
-        elif event.char == 'a' or event.char == 'A':
-            self.mode = 'auto'
+            if self.mode == 'manual':
+                self.mode = 'auto'
+            else:
+                self.mode = 'manual'
 
     def speed_control(self, direction):
         """
@@ -177,12 +178,12 @@ class HybridDriver(object):
     def handle_telemetry(self, data):
 
         if self.mode == 'auto':
-            steering_angle = self.predict_steering(data)
-        elif self.mode == 'manual':
-            steering_angle = self.steering_angle
+            self.steering_angle = self.predict_steering(data)
+        # elif self.mode == 'manual':
+        #     steering_angle = self.steering_angle
 
-        # Send current control variables to simulator    
-        self.control_srv.send_control(steering_angle, self.throttle)
+        # Send current control variables to simulator
+        self.control_srv.send_control(self.steering_angle, self.throttle)
 
         # Update UI
         self.update_status()
