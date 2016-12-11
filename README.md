@@ -7,6 +7,12 @@ Udacity's Self Driving Car (SDC) Simulator using a neural network, while also al
 
 This was idea inspired by [John Chen's Agile Trainer](https://www.github.com/diyjac/AgileTrainer).
 
+### server.py
+
+This is an object-oriented, modular version of the `drive.py` script that Udacity provided. I made a `ControlServer` class that triggers callbacks when the simulator connects and sends telemetry. This plugs into all the three programs listed below.
+
+The main difficulty was in understanding how `Tkinter`'s event loop works and how to make it play nice with the `eventlet` loop that `drive.py` uses to set up the WSGI server. Eventually, I was able to fold in the Tkinter UI loop as a sepearate `eventlet` "greenthread". Check the code for details on how this is implemented.
+
 ### manual_driver.py
 
 This was my initial proof of concept to see if it is possible to reliably control the SDC simulator using keyboard input, while the simulator is in "autonomous mode".
@@ -17,8 +23,8 @@ You can run it by typing: `python manual_driver.py`
 
 Then start the Udacity SDC Simulator and click "Autonomous Mode". This should bring the program window into focus again once the simulator connects. The controls are:
 
-**Up/Down** : Control speed  
-**Left/Right** : Steer the car
+**<kbd>Up</kbd>/<kbd>Down</kbd>** : Control speed  
+**<kbd>Left</kbd>/<kbd>Right</kbd>** : Steer the car
 
 ### hybrid_driver.py
 
@@ -31,21 +37,21 @@ where `<model>.json` is the Keras model file. The program expects the weights fo
 
 The controls are:
 
-**Up/Down** : Control speed  
-**Left/Right** : Steer the car  
-**x** : Toggle manual override and autonomous mode  
-**c** : Reset steering angle to zero (only in manual mode)  
+**<kbd>Up</kbd>/<kbd>Down</kbd>** : Control speed  
+**<kbd>Left</kbd>/<kbd>Right</kbd>** : Steer the car  
+**<kbd>x</kbd>** : Toggle manual override and autonomous mode  
+**<kbd>c</kbd>** : Reset steering angle to zero (only in manual mode)  
 
 ### live_trainer.py
 This is the final implementation of the live trainer. This program combines the functionality of the above two scripts, along with the capability to train the neural network in real-time. Every time a batch is trained, the model weights are saved to `checkpoint.h5`. Live training can be initiated at any time when the car is in manual override.
 
 The controls are:
 
-**Up/Down** : Control speed  
-**Left/Right** : Steer the car  
-**x** : Toggle manual override and autonomous mode  
-**c** : Reset steering angle to zero (only in manual mode)  
-**z** : Toggle live training (only in manual mode)  
+**<kbd>Up</kbd>/<kbd>Down</kbd>** : Control speed  
+**<kbd>Left</kbd>/<kbd>Right</kbd>** : Steer the car  
+**<kbd>x</kbd>** : Toggle manual override and autonomous mode  
+**<kbd>c</kbd>** : Reset steering angle to zero (only in manual mode)  
+**<kbd>z</kbd>** : Toggle live training (only in manual mode)  
 
 The program also displays an "Autonomous Rating" which is the percentage of runtime that the program was in fully autonomous mode.
 
