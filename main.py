@@ -161,9 +161,10 @@ class LiveTrainer(object):
         """
         direction = +1 for increase, -1 for decrease
         """
-        if self.speed < self.speed_limit:
-            self.speed += direction*1
+        self.speed += direction*1
+
         self.speed = max(0, self.speed)
+        self.speed = min(self.speed_limit, self.speed)
 
         self.update_status()
 
