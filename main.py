@@ -9,6 +9,7 @@ __author__ = 'Thomas Antony'
 
 import os
 import sys
+import time
 import tkinter
 import argparse
 import base64
@@ -60,6 +61,11 @@ class LiveTrainer(object):
         self.current_X = [] # List of images
         self.current_Y = [] # List of steering angles
 
+        # Performance metrics
+        self.start_time = None
+        self.last_switch_time = None
+        self.auto_time = 0
+
     def init_gui(self):
         # Create the root window
         self.root = tkinter.Tk()
@@ -105,10 +111,32 @@ class LiveTrainer(object):
             eventlet.sleep(0.01)
 
     def update_status(self):
-        mode = 'Autonomous' if self.mode == 'auto' else 'Manual override'
+        mode = 'Autopilot Engaged' if self.mode == 'auto' else 'Manual override'
         train_text = 'Training neural net ...' if self.is_training else ''
-        self.status.set('Mode: %s\n%s\nSpeed = %0.2f mph, Steering angle = %0.2f deg' %
-                    (mode, train_text, self.speed, self.steering_angle*25))
+
+        if self.start_time is not None:
+            now = time.time()
+            total_time = now - self.start_time
+            auto_time = self.auto_time
+            if self.mode == 'auto':
+                auto_time += (now - self.last_switch_time)
+
+            rating = auto_time/total_time
+        else:
+            rating = 0.0
+        status_txt = '{0}\nAutnomous rating: {1:.2%}\n{2}\nSpeed = {3:4.2f} mph, Steering angle = {4:4.2f} deg'
+
+        self.status.set(status_txt.format(mode, rating, train_text, self.speed, self.steering_angle*25))
+
+    def update_timers(self):
+        """
+        Triggered after a mode change or at start.
+        """
+        # Update timers for autonomous mode
+        if self.mode == 'auto':
+            self.last_switch_time = time.time()
+        else:
+            self.auto_time += time.time() - self.last_switch_time
 
     def keydown(self, event):
         if (event.char == 'q'):
@@ -122,6 +150,7 @@ class LiveTrainer(object):
                 self.mode = 'auto'
             else:
                 self.mode = 'manual'
+            self.update_timers()
         elif event.char == 'z' or event.char == 'Z':
             # Toggle flag (only in manual mode)
             if self.mode == 'manual':
@@ -224,6 +253,9 @@ class LiveTrainer(object):
 
     # Callback functions triggered by ControlServer
     def handle_connect(self, sid):
+        self.start_time = time.time()  # Reset timer
+        self.auto_time = 0.0
+        self.update_timers()
         # Focus window when simulator connects
         self.focus_gui()
 
