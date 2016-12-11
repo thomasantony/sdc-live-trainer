@@ -39,8 +39,9 @@ class LiveTrainer(object):
         self.speed = 0
 
         # Parameters
+        self.speed_limit = 30
         self.turn_rate = 0.5
-        self.steering_limit = 10./25.
+        self.steering_limit = 15./25.
         self.centering_torque = 0.01/25.
 
         # Helper functions
@@ -160,7 +161,7 @@ class LiveTrainer(object):
         """
         direction = +1 for increase, -1 for decrease
         """
-        if self.speed < 25:
+        if self.speed < self.speed_limit:
             self.speed += direction*1
         self.speed = max(0, self.speed)
 
