@@ -5,19 +5,19 @@ Live training program for Udacity's SDC Simulator. Created as a part of Udacity 
 This program was created to allow the "remote" driving of
 Udacity's Self Driving Car (SDC) Simulator using a neural network, while also allowing an option for manual override and live-collection of data from real time fine-tuning of the neural network.
 
+This was idea inspired by [John Chen's Agile Trainer](https://www.github.com/diyjac/AgileTrainer).
+
 ### manual_driver.py
 
 This was my initial proof of concept to see if it is possible to reliably control the SDC simulator using keyboard input, while the simulator is in "autonomous mode".
 
 The keyboard input is used to increment and decrement a `steering_angle` state. The program also models some restoring-torque dynamics that slowly re-centers the steering when there is no keyboard input. There is also a simple proportional-gain controller that modulates the throttle to achieve a target speed that can be controlled by the user.
 
-You can run it by simply typing:
-
-`python manual_driver.py`
+You can run it by typing: `python manual_driver.py`
 
 Then start the Udacity SDC Simulator and click "Autonomous Mode". This should bring the program window into focus again once the simulator connects. The controls are:
 
-**Up/Down** : Control speed
+**Up/Down** : Control speed  
 **Left/Right** : Steer the car
 
 ### hybrid_driver.py
