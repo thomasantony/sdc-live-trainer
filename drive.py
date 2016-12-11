@@ -58,8 +58,8 @@ def telemetry(sid, data):
     steering_threshold = 3./25
 
     # Targets for speed controller
-    nominal_set_speed = 25
-    steering_set_speed = 15
+    nominal_set_speed = 20
+    steering_set_speed = 20
 
     K = 0.35   # Proportional gain
 
