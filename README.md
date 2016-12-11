@@ -7,6 +7,8 @@ Udacity's Self Driving Car (SDC) Simulator using a neural network, while also al
 
 This was idea inspired by [John Chen's Agile Trainer](https://www.github.com/diyjac/AgileTrainer).
 
+Note: If you want to use your own model, make sure you modify the `preprocess_input` method in `live_trainer.py` to do whatever preprocessing your model expects.
+
 ### server.py
 
 This is an object-oriented, modular version of the `drive.py` script that Udacity provided. I made a `ControlServer` class that triggers callbacks when the simulator connects and sends telemetry. This plugs into all the three programs listed below.
