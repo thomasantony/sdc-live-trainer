@@ -14,7 +14,7 @@ from io import BytesIO
 import cv2
 
 from keras.models import model_from_json
-from keras.preprocessing.image import ImageDataGenerator, array_to_img, img_to_array
+from keras.preprocessing.image import img_to_array
 
 import tensorflow as tf
 from tensorflow.python.ops import control_flow_ops
@@ -24,27 +24,13 @@ tf.python.control_flow_ops = control_flow_ops
 sio = socketio.Server()
 app = Flask(__name__)
 model = None
-prev_image_array = None
-
-# def normalize_color(image_data):
-#
-#     # For model 4
-#     a = -0.5
-#     b = +0.5
-#     # a = +0.1
-#     # b = +0.9
-#
-#     Xmin = 0.0
-#     Xmax = 255.0
-#
-#     # norm_img = np.empty_like(image_data, dtype=np.float32)
-#
-#     norm_img = a + (image_data - Xmin)*(b-a)/(Xmax - Xmin)
-#     return norm_img
 
 def roi(img): # For model 5
     img = img[60:140,40:280]
     return cv2.resize(img, (200, 66))
+
+def preprocess_input(img):
+    return roi(cv2.cvtColor(img, cv2.COLOR_RGB2YUV))
 
 @sio.on('telemetry')
 def telemetry(sid, data):
@@ -60,35 +46,22 @@ def telemetry(sid, data):
 
     # model >= 5
     x = np.asarray(image, dtype=np.float32)
-    image_array = roi(cv2.cvtColor(x, cv2.COLOR_RGB2YUV))
+    image_array = preprocess_input(x)
     transformed_image_array = image_array[None, :, :, :]
 
-    # image = image.convert('YCbCr') # Needed for model < 5
-    # image_array = np.asarray(image, dtype=np.float32)
-
-    # transformed_image_array = (image_array[None, :, :, :])/255. # model <= 2
-    # transformed_image_array = normalize_color(image_array[None, :, :, :]) # model >= 3
-
-    # This model currently assumes that the features of the model are just the images. Feel free to change this.
     steering_angle = float(model.predict(transformed_image_array, batch_size=1))
 
-    # steering_angle = steering_angle*2 - 1.  # -- for model == 4
-
-    # The driving model currently just outputs a constant throttle. Feel free to edit this.
-
-    # Throttle down at higher angles
-    # neg throttle if |Steering| > 3.75 deg
     speed = float(speed)
 
     throttle_max = 1.0
     throttle_min = -1.0
-    steering_threshold = 4./25
+    steering_threshold = 3./25
 
     # Targets for speed controller
-    nominal_set_speed = 20
+    nominal_set_speed = 25
     steering_set_speed = 15
 
-    K = 0.15   # Proportional gain
+    K = 0.35   # Proportional gain
 
     # Slow down for turns
     if abs(steering_angle) > steering_threshold:
@@ -100,7 +73,7 @@ def telemetry(sid, data):
     throttle = min(throttle_max, throttle)
     throttle = max(throttle_min, throttle)
     # else don't change from previous
-    # print(steering_angle, throttle)
+    print(steering_angle, throttle)
     send_control(steering_angle, throttle)
 
 

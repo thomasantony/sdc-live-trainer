@@ -75,6 +75,18 @@ class HybridDriver(object):
         # Start UI loop
         eventlet.spawn_after(1, self.main_loop)
 
+    def keydown(self, event):
+        if (event.char == 'q'):
+            self.root.destroy()
+            os._exit(0) # Sledgehammer
+        elif event.char == 'c' or event.char == 'C':
+            self.reset_steering()
+        elif event.char == 'x' or event.char == 'X':
+            if self.mode == 'manual':
+                self.mode = 'auto'
+            else:
+                self.mode = 'manual'
+
     def start_server(self):
         self.control_srv.start() # Start server
 
@@ -99,18 +111,6 @@ class HybridDriver(object):
         mode = 'Autonomous' if self.mode == 'auto' else 'Manual override'
         self.status.set('Mode: %s\nSpeed = %0.2f mph, Steering angle = %0.2f deg' %
                     (mode, self.speed, self.steering_angle*25))
-
-    def keydown(self, event):
-        if (event.char == 'q'):
-            self.root.destroy()
-            os._exit(0) # Sledgehammer
-        elif event.char == 'c' or event.char == 'C':
-            self.reset_steering()
-        elif event.char == 'x' or event.char == 'X':
-            if self.mode == 'manual':
-                self.mode = 'auto'
-            else:
-                self.mode = 'manual'
 
     def speed_control(self, direction):
         """

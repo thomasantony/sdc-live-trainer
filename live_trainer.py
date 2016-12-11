@@ -5,6 +5,13 @@ Live trainer script for Udacity SDC sim
 - Override with manual control
 - Train model during manual control
 """
+
+
+training_batch_size = 16
+checkpoint_filename = './checkpoint.h5'
+learning_rate = 0.00001
+
+## PLEASE DO NOT EDIT PAST THIS POINT
 __author__ = 'Thomas Antony'
 
 import os
@@ -58,7 +65,6 @@ class LiveTrainer(object):
         self.is_training = False # Trains model if set to true
 
         self.model = model
-        self.batch_size = 16
         self.current_X = [] # List of images
         self.current_Y = [] # List of steering angles
 
@@ -175,7 +181,7 @@ class LiveTrainer(object):
         throttle_max = 1.0
         throttle_min = -1.0
 
-        K = 0.25    # Proportional gain
+        K = 0.35    # Proportional gain
 
         self.throttle = (self.speed - data['speed'])*K
         self.throttle = min(throttle_max, self.throttle)
@@ -222,13 +228,13 @@ class LiveTrainer(object):
         """
         Saves training data in current batch to disk.
         """
-        # TODO: Implement save_batch
+        # TODO: Implement save_batch()
         pass
 
     def train_model(self, model, X_train, y_train):
         h = model.fit(X_train, y_train,
-            nb_epoch = 1, verbose=0, batch_size=self.batch_size)
-        model.save_weights('./checkpoint.h5')
+            nb_epoch = 1, verbose=0, batch_size=training_batch_size)
+        model.save_weights(checkpoint_filename)
         print('loss : ',h.history['loss'][-1])
         return model
 
@@ -240,7 +246,7 @@ class LiveTrainer(object):
         self.current_X.append(self.preprocess_input(data['image']))
         self.current_Y.append(self.steering_angle)
 
-        if len(self.current_Y) == self.batch_size:
+        if len(self.current_Y) == training_batch_size:
             X_train = np.array(self.current_X)
             y_train = np.array(self.current_Y)
 
@@ -290,7 +296,7 @@ if __name__ == '__main__':
     with open(args.model, 'r') as jfile:
         model = model_from_json(jfile.read())
 
-    adam = Adam(lr=0.00001)
+    adam = Adam(lr=learning_rate)
     model.compile(adam, "mse")
     weights_file = args.model.replace('json', 'h5')
 
