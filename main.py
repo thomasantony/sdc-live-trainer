@@ -70,7 +70,7 @@ class LiveTrainer(object):
         # Create the root window
         self.root = tkinter.Tk()
         self.root.geometry('350x75+490+550')
-        self.root.title('Hybrid driver')
+        self.root.title('SDC Live Trainer')
 
         # Create a label with status
         self.status = tkinter.StringVar()
