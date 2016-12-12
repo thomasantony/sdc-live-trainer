@@ -263,6 +263,8 @@ class LiveTrainer(object):
     def handle_connect(self, sid):
         self.start_time = time.time()  # Reset timer
         self.auto_time = 0.0
+        self.last_switch_time = None
+        
         self.update_timers()
         # Focus window when simulator connects
         self.focus_gui()
